@@ -2,7 +2,7 @@
 	pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
-
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@include file="../layouts/header.jsp"%>
 
 <link rel="stylesheet" href="/resources/css/summernote/summernote-lite.min.css">
@@ -24,36 +24,38 @@ $(document).ready(function() {
 });
 </script>
 
-<h1 class="page-header"><i class="far fa-edit"></i> Board Modification</h1>
+<h1 class="page-header"><i class="far fa-edit"></i> 글 수정</h1>
+
 <div class="panel panel-default">
-	<div class="panel-heading">Board Modification</div>
 	<div class="panel-body">
-		<form role="form" method="post" >
-			<input type="hidden" name="bno" value="${board.bno}">
-			
+		<form:form modelAttribute="board" role="form">
+			<form:hidden path="bno"/>
+
 			<div class="form-group">
-				<label>Title</label>
-				<input name="title" class="form-control" value="${board.title}">
+				<form:label path="title">제목</form:label>
+				<form:input path="title" cssClass="form-control" />
+				<form:errors path="title" cssClass="error"/>
 			</div>
 			<div class="form-group">
-				<label>Writer</label>
-				<input name="writer" class="form-control" value="${board.writer}">
+				<form:label path="writer">작성자</form:label>
+				<form:input path="writer" cssClass="form-control" />
+				<form:errors path="writer" cssClass="error"/>
 			</div>
+
 			<div class="form-group">
-				<label>Content</label>
-				<textarea class="form-control" 
-					name="content" id="content">${board.content}</textarea>
+				<form:label path="content">내용</form:label>
+				<form:textarea path="content" class="form-control"></form:textarea>
+				<form:errors path="content" cssClass="error"/>
 			</div>
 
 			<button type="submit" class="btn btn-primary">
-             <i class="fas fa-check"></i> 확인</button>
+				<i class="fas fa-check"></i> 확인</button>
 			<button type="reset" class="btn btn-primary">
-             <i class="fas fa-undo"></i> 취소</button>
+				<i class="fas fa-undo"></i> 취소</button>
 			<a href="${cri.getLinkWithBno('get', board.bno)}" class="btn btn-primary get">
-             <i class="fas fa-file-alt"></i> 돌아가기</a>
-		</form>
+				<i class="fas fa-file-alt"></i> 돌아가기</a>
+		</form:form>
 	</div>
-</div>
 <%-- 
 <form id="getForm" action="/board/get" method="get" >
 	<input type="hidden" id="bno" name="bno" value="${board.bno}"/>

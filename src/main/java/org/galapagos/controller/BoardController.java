@@ -7,6 +7,7 @@ import org.galapagos.service.BoardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,96 +17,124 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import lombok.extern.log4j.Log4j;
 
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Controller
 @Log4j
 @RequestMapping("/board")
 public class BoardController {
-	@Autowired
-	private BoardService service;
 
-	@GetMapping("/list")
-	public void list(@ModelAttribute("cri") Criteria cri, Model model) {
-	
-		log.info("list" + cri);
-		int total = service.getTotal(cri);
+    @Autowired
+    private BoardService service;
+
+    @ModelAttribute("searchTypes")
+    public Map<String, String> searchTypes() {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("", "-- 검색대상 선택 --");
+        map.put("T", "제목");
+        map.put("W", "작성자");
+        map.put("C", "내용");
+        map.put("TC", "제목 + 내용");
+        map.put("TW", "제목 + 작성자");
+        map.put("TWC", "제목 + 작성자 + 내용");
+
+        return map;
+    }
+
+    @GetMapping("/list")
+    public void list(@ModelAttribute("cri") Criteria cri, Model model) {
+
+        log.info("list" + cri);
+        int total = service.getTotal(cri);
 
 //		model.addAttribute("list", service.getList());
-		model.addAttribute("list", service.getList(cri));
-		model.addAttribute("pageMaker", new PageDTO(cri, total));	// 임의로 123  요청
+        model.addAttribute("list", service.getList(cri));
+        model.addAttribute("pageMaker", new PageDTO(cri, total));    // 임의로 123  요청
 
-	}
-	
-	@GetMapping("/register")
-	public void register() {	
-		log.info("register");	
-	}
+    }
 
-	@PostMapping("/register")
-	public String register(BoardVO board, RedirectAttributes rttr) {
+    @GetMapping("/register")
+    public void register(@ModelAttribute("board") BoardVO board) {
+        log.info("register");
+    }
 
-		log.info("register: " + board);
+    @PostMapping("/register")
+    public String register(@Valid @ModelAttribute BoardVO board,
+						   Errors errors,
+						   RedirectAttributes rttr) {
 
-		service.register(board);
+        log.info("register: " + board);
+		if(errors.hasErrors()){
+			return "board/register";
+		}
 
-		rttr.addFlashAttribute("result", board.getBno());
+        service.register(board);
 
-		return "redirect:/board/list";
-		
+        rttr.addFlashAttribute("result", board.getBno());
 
-	}
-	
-	@GetMapping({ "/get", "/modify" })
-	public void get(
-			@RequestParam("bno") Long bno,
-			@ModelAttribute("cri") Criteria cri,
-			Model model) {
+        return "redirect:/board/list";
 
-		log.info("/get or modify");
-		model.addAttribute("board", service.get(bno));
-	}
-	
-	@PostMapping("/modify")
-	public String modify(
-			BoardVO board, 
-			@ModelAttribute("cri") Criteria cri,
-			RedirectAttributes rttr) {
-		log.info("modify:" + board);
-	
-		
-		if (service.modify(board)) {
-			// Flash --> 1회성
-			rttr.addFlashAttribute("result", "success");
+
+    }
+
+    @GetMapping({"/get", "/modify"})
+    public void get(
+            @RequestParam("bno") Long bno,
+            @ModelAttribute("cri") Criteria cri,
+            Model model) {
+
+        log.info("/get or modify");
+        model.addAttribute("board", service.get(bno));
+    }
+
+    @PostMapping("/modify")
+    public String modify(
+            @Valid @ModelAttribute("board") BoardVO board,
+			Errors errors,
+            @ModelAttribute("cri") Criteria cri,
+            RedirectAttributes rttr) {
+        log.info("modify:" + board);
+
+		if(errors.hasErrors()){
+			return "board/modify";
+		}
+
+        if (service.modify(board)) {
+            // Flash --> 1회성
+            rttr.addFlashAttribute("result", "success");
 //			rttr.addAttribute("bno", board.getBno());
 //			rttr.addAttribute("pageNum", cri.getPageNum());
 //			rttr.addAttribute("amount", cri.getAmount());
 //			rttr.addAttribute("type", cri.getType());
 //			rttr.addAttribute("keyword", cri.getKeyword());
 
-		}
+        }
 //		return "redirect:/board/get";
-		return "redirect:" + cri.getLinkWithBno("/board/get", board.getBno());
-		
+        return "redirect:" + cri.getLinkWithBno("/board/get", board.getBno());
 
-	}
 
-	
-	@PostMapping("/remove")
-	public String remove(
-			@RequestParam("bno") Long bno, 
-			@ModelAttribute("cri") Criteria cri,
-			RedirectAttributes rttr) {
-	
-		log.info("remove..." + bno);
-		if (service.remove(bno)) {
-			rttr.addFlashAttribute("result", "success");
+    }
+
+
+    @PostMapping("/remove")
+    public String remove(
+            @RequestParam("bno") Long bno,
+            @ModelAttribute("cri") Criteria cri,
+            RedirectAttributes rttr) {
+
+        log.info("remove..." + bno);
+        if (service.remove(bno)) {
+            rttr.addFlashAttribute("result", "success");
 //			rttr.addAttribute("pageNum", cri.getPageNum());
 //			rttr.addAttribute("amount", cri.getAmount());
 //			rttr.addAttribute("type", cri.getType());
 //			rttr.addAttribute("keyword", cri.getKeyword());
-		}
+        }
 //		return "redirect:/board/list";
-		return "redirect:/board/list" + cri.getLink();
+        return "redirect:/board/list" + cri.getLink();
 
-	}
+    }
 
 }

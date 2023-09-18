@@ -8,6 +8,7 @@ import org.galapagos.service.TravelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,12 +18,31 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import lombok.extern.log4j.Log4j;
 
+import javax.validation.Valid;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Controller
 @Log4j
 @RequestMapping("/travel")
 public class TravelController {
+
 	@Autowired
 	private TravelService service;
+
+	@ModelAttribute("searchTypes")
+	public Map<String, String> searchTypes() {
+		Map<String, String> map = new LinkedHashMap<String, String>();
+		map.put("", "-- 검색대상선택 --");
+		map.put("R", "권역");
+		map.put("T", "제목");
+		map.put("D", "내용");
+		map.put("TD", "제목+내용");
+		map.put("TR", "권역+제목");
+		map.put("TRD", "권역+제목+내용");
+
+		return map;
+	}
 	
 	@GetMapping("/list")
 	public void list(
@@ -45,9 +65,14 @@ public class TravelController {
 
 	@PostMapping("/modify")
 	public String modify(
-			TravelVO travel, 
+			@Valid @ModelAttribute("travel") TravelVO travel,
+			Errors errors,
 			@ModelAttribute("cri") Criteria cri,
 			RedirectAttributes rttr) {
+
+		if(errors.hasErrors()){
+			return "travel/modify";
+		}
 
 		service.modify(travel);
 
@@ -58,11 +83,18 @@ public class TravelController {
 	}	
 	
 	@GetMapping("/register")
-	public void register() {	
+	public void register(@ModelAttribute("travel") TravelVO travelVO) {
 	}
 
 	@PostMapping("/register")
-	public String register(TravelVO travel, RedirectAttributes rttr) {
+	public String register(@Valid @ModelAttribute("travel") TravelVO travel,
+						   Errors errors,
+						   RedirectAttributes rttr) {
+
+		if(errors.hasErrors()){
+			return "travel/register";
+		}
+
 		service.register(travel);
 		return "redirect:/travel/list";
 	}
